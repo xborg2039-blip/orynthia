@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORYNTHIA | Every world hides a secret</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #080914;
+  color: #f5f3ff;
+  font-family: Arial, sans-serif;
+}
+header {
+  padding: 22px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #252542;
+}
+.logo { color: #a99aff; font-weight: bold; letter-spacing: 4px; }
+nav a { color: white; text-decoration: none; margin-left: 14px; }
+.hero {
+  text-align: center;
+  padding: 85px 20px;
+  background: radial-gradient(ellipse, #282052, #080914 70%);
+}
+.eye { font-size: 65px; color: #b4a0ff; }
+h1 { font-size: 42px; letter-spacing: 7px; }
+.tagline { color: #aaa4c8; }
+.button {
+  display: inline-block;
+  background: #8065e9;
+  color: white;
+  padding: 14px 28px;
+  border-radius: 7px;
+  text-decoration: none;
+  margin-top: 20px;
+}
+section { padding: 35px 22px; }
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 16px;
+}
+.game {
+  background: #15162a;
+  padding: 25px;
+  border: 1px solid #343052;
+  border-radius: 12px;
+}
+.game p { color: #aaa4c8; }
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #888;
+  border-top: 1px solid #252542;
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ORYNTHIA</div>
+  <nav><a href="#games">Games</a><a href="#about">About</a></nav>
+</header>
+
+<div class="hero">
+  <div class="eye">◉</div>
+  <h1>ORYNTHIA</h1>
+  <p class="tagline">Every world hides a secret.</p>
+  <a class="button" href="#games">Explore Worlds</a>
+</div>
+
+<section id="games">
+  <h2>Discover Your Next Adventure</h2>
+  <div class="games">
+    <div class="game">
+      <h3>🧩 Puzzle Realm</h3>
+      <p>Challenge your mind.</p>
+      <a class="button" href="https://play2048.co/">Play 2048</a>
+    </div>
+    <div class="game">
+      <h3>🐍 Arcade Zone</h3>
+      <p>Classic arcade fun.</p>
+      <a class="button" href="https://playsnake.org/">Play Snake</a>
+    </div>
+    <div class="game">
+      <h3>🌌 Mystery World</h3>
+      <p>More adventures coming soon.</p>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <h2>Beyond Ordinary Gaming</h2>
+  <p>ORYNTHIA is a growing browser gaming destination.
+  Discover new worlds, challenge yourself and play.</p>
+</section>
+
+<footer>
+  © 2026 ORYNTHIA. Every world hides a secret.
+</footer>
+</body>
+</html>
