@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORYNTHIA - The Lost Relic</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #25164b, #080711 65%);
+  color: #f4efff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 25px 16px;
+}
+h1 { letter-spacing: 5px; color: #b99aff; }
+.subtitle { color: #b9aacd; }
+.panel {
+  max-width: 430px;
+  margin: 35px auto;
+  padding: 25px 18px;
+  background: #11101e;
+  border: 1px solid #514078;
+  border-radius: 18px;
+  box-shadow: 0 0 35px #7950c333;
+}
+.runes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 25px 0;
+}
+.rune {
+  min-height: 75px;
+  font-size: 32px;
+  color: #d9caff;
+  background: #211936;
+  border: 1px solid #7658a8;
+  border-radius: 13px;
+  cursor: pointer;
+}
+.rune:active { background: #7650bd; }
+button {
+  font-size: 16px;
+  padding: 13px 20px;
+  border: 0;
+  border-radius: 10px;
+  background: #8761e8;
+  color: white;
+  cursor: pointer;
+}
+button:disabled { opacity: .4; }
+#message { min-height: 55px; color: #cbb7ff; line-height: 1.5; }
+#guess { font-size: 27px; letter-spacing: 9px; min-height: 42px; }
+.small { color: #a99bbd; font-size: 13px; }
+#win { display:none; color: #d9c1ff; }
+</style>
+</head>
+<body>
+
+<h1>ORYNTHIA</h1>
+<p class="subtitle">THE LOST RELIC</p>
+
+<div class="panel">
+  <h2>The Ancient Chamber</h2>
+  <p class="small">Four runes guard the secret of the Lost Relic.</p>
+  <p>Discover the correct four-rune sequence.</p>
+
+  <div id="guess">_ _ _ _</div>
+
+  <div class="runes">
+    <button class="rune" onclick="pick('☾')">☾</button>
+    <button class="rune" onclick="pick('✦')">✦</button>
+    <button class="rune" onclick="pick('◈')">◈</button>
+    <button class="rune" onclick="pick('♜')">♜</button>
+    <button class="rune" onclick="pick('☼')">☼</button>
+    <button class="rune" onclick="pick('✧')">✧</button>
+  </div>
+
+  <button onclick="submitGuess()" id="submit">Unlock Sequence</button>
+  <button onclick="clearGuess()" style="background:#393047">Clear</button>
+
+  <p id="message">Choose four runes, then test your sequence.</p>
+  <p class="small" id="attempts">Attempts remaining: 8</p>
+
+  <div id="win">
+    <h2>✧ THE RELIC IS YOURS ✧</h2>
+    <p>You have uncovered the chamber's secret!</p>
+    <button onclick="restart()">Explore Again</button>
+  </div>
+</div>
+
+<p class="small">Every world hides a secret.</p>
+
+<script>
+const symbols = ['☾','✦','◈','♜','☼','✧'];
+let secret = [];
+let selected = [];
+let remaining = 8;
+let finished = false;
+
+function newSecret() {
+  secret = Array.from({length:4}, () =>
+    symbols[Math.floor(Math.random()*symbols.length)]
+  );
+}
+newSecret();
+
+function update() {
+  document.getElementById('guess').textContent =
+    selected.length ? selected.join(' ') + ' _'.repeat(4-selected.length) : '_ _ _ _';
+}
+
+function pick(symbol) {
+  if (finished || selected.length >= 4) return;
+  selected.push(symbol);
+  update();
+}
+
+function clearGuess() {
+  if (finished) return;
+  selected = [];
+  update();
+  document.getElementById('message').textContent = 'Choose your four runes.';
+}
+
+function submitGuess() {
+  if (finished) return;
+  if (selected.length !== 4) {
+    document.getElementById('message').textContent =
+      'The chamber requires exactly four runes.';
+    return;
+  }
+
+  let correct = selected.filter((r,i) => r === secret[i]).length;
+  remaining--;
+  document.getElementById('attempts').textContent =
+    'Attempts remaining: ' + remaining;
+
+  if (correct === 4) {
+    finished = true;
+    document.getElementById('message').textContent =
+      'The ancient seal has opened!';
+    document.getElementById('win').style.display = 'block';
+  } else if (remaining === 0) {
+    finished = true;
+    document.getElementById('message').textContent =
+      'The chamber remains sealed. The answer was: ' + secret.join(' ');
+    document.getElementById('win').style.display = 'block';
+    document.querySelector('#win h2').textContent = 'THE CHAMBER IS SEALED';
+    document.querySelector('#win p').textContent = 'Try another chamber to uncover the relic.';
+  } else {
+    document.getElementById('message').textContent =
+      correct + ' rune(s) are in the correct position. Try again!';
+  }
+
+  selected = [];
+  update();
+}
+
+function restart() {
+  selected = [];
+  remaining = 8;
+  finished = false;
+  newSecret();
+  document.getElementById('attempts').textContent = 'Attempts remaining: 8';
+  document.getElementById('message').textContent = 'A new chamber awaits you.';
+  document.getElementById('win').style.display = 'none';
+  document.querySelector('#win h2').textContent = '✧ THE RELIC IS YOURS ✧';
+  update();
+}
+</script>
+</body>
+</html>
