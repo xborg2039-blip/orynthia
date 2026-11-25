@@ -1,0 +1,359 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ORYNTHIA: THE VEIL</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#030309;color:white;font-family:Arial}
+canvas{display:block}
+#hud{position:fixed;top:14px;width:100%;text-align:center;pointer-events:none;z-index:3}
+h1{margin:0;color:#c4a0ff;letter-spacing:6px;font-size:21px}
+#status{font-size:11px;color:#c9b9dc;margin-top:7px}
+#controls{position:fixed;bottom:24px;left:25px;width:110px;height:110px;border:2px solid #a98bcb88;border-radius:50%;z-index:4;touch-action:none;background:#6a458322}
+#knob{position:absolute;left:30px;top:30px;width:46px;height:46px;border-radius:50%;background:#c5a4ff99;border:2px solid #ddcaff}
+#look{position:fixed;right:0;bottom:0;width:60%;height:70%;z-index:2;touch-action:none}
+#hint{position:fixed;bottom:8px;right:12px;font-size:10px;color:#b9a9ca;z-index:3;pointer-events:none}
+#intro,#scare{position:fixed;inset:0;background:#030309f5;z-index:10;display:flex;align-items:center;justify-content:center;text-align:center;padding:25px}
+#intro button{background:#8056c5;color:white;border:0;padding:15px 24px;border-radius:10px;font-size:17px}
+#scare{display:none;background:#080009;color:#fff;z-index:20}
+#scare h2{font-size:30px;color:#ffb6c5;text-shadow:0 0 20px red}
+#scare button{background:#8056c5;color:white;border:0;padding:13px 22px;border-radius:9px}
+p{line-height:1.6;color:#c6b9d3}
+</style>
+</head>
+<body>
+<div id="hud">
+<h1>ORYNTHIA</h1>
+<div id="status">THE VEIL • SOMETHING IS WATCHING</div>
+</div>
+<div id="controls"><div id="knob"></div></div>
+<div id="look"></div>
+<div id="hint">LEFT: WALK • RIGHT: LOOK</div>
+
+<div id="intro">
+<div>
+<h1>THE VEIL</h1>
+<p>Something lives inside this building.<br>
+Find the exit. Don't trust the silence.<br><br>
+Move with the left joystick.<br>
+Drag the right side to look around.</p>
+<button id="start">ENTER THE BUILDING</button>
+</div>
+</div>
+
+<div id="scare">
+<div>
+<h2>SHE FOUND YOU.</h2>
+<p>You should not have stayed here.</p>
+<button onclick="location.reload()">TRY AGAIN</button>
+</div>
+</div>
+
+<script type="module">
+import * as THREE from
+'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x030309);
+scene.fog=new THREE.FogExp2(0x080710,.045);
+
+const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,80);
+camera.position.set(0,1.65,9);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.shadowMap.enabled=true;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0x77718e,0x100c18,.75));
+
+function material(color,roughness=1,extra={}){
+return new THREE.MeshStandardMaterial({color,roughness,...extra});
+}
+function cube(w,h,d,x,y,z,color){
+const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(color));
+m.position.set(x,y,z);
+m.castShadow=true;m.receiveShadow=true;
+scene.add(m);return m;
+}
+
+// THE ABANDONED CORRIDOR
+cube(9,.3,55,0,-.2,-13,0x25212b);
+cube(9,.3,55,0,4.5,-13,0x15121c);
+cube(.3,4.5,55,-4.5,2,-13,0x292432);
+cube(.3,4.5,55,4.5,2,-13,0x292432);
+
+for(let z=10;z>-40;z-=9){
+const light=new THREE.PointLight(0x76528d,1.2,10);
+light.position.set(0,3.7,z);
+scene.add(light);
+cube(.4,.1,.3,0,4.1,z,0x78618f);
+}
+for(let z=4;z>-37;z-=11){
+cube(.08,2.7,1.7,-4.29,1.35,z,0x100b17);
+cube(.08,2.7,1.7,4.29,1.35,z-4,0x100b17);
+}
+
+// PLAYER FLASHLIGHT
+const flashlight=new THREE.SpotLight(0xe1d8ff,85,24,Math.PI/7,.5,1);
+flashlight.position.set(0,0,0);
+flashlight.target.position.set(0,0,-1);
+camera.add(flashlight);
+camera.add(flashlight.target);
+scene.add(camera);
+
+// GHOST MATERIALS
+const dressMat=material(0xd8d3dc,.95,{side:THREE.DoubleSide});
+const skinMat=material(0xb8b1b3,.9);
+const hairMat=material(0x08070d,.95);
+const darkMat=new THREE.MeshBasicMaterial({color:0x09040a});
+const eyeMat=new THREE.MeshBasicMaterial({color:0xffad35});
+const eyeLight=new THREE.PointLight(0xff8b23,2,3);
+
+const ghost=new THREE.Group();
+scene.add(ghost);
+ghost.position.set(0,0,-20);
+
+function part(parent,geometry,mat,x,y,z,sx=1,sy=1,sz=1){
+const m=new THREE.Mesh(geometry,mat);
+m.position.set(x,y,z);
+m.scale.set(sx,sy,sz);
+m.castShadow=true;
+parent.add(m);
+return m;
+}
+
+// Flowing long dress
+const dressShape=new THREE.LatheGeometry([
+new THREE.Vector2(.12,0),
+new THREE.Vector2(.3,.08),
+new THREE.Vector2(.43,.3),
+new THREE.Vector2(.34,.65),
+new THREE.Vector2(.24,1.05),
+new THREE.Vector2(.2,1.35)
+],32);
+const dress=part(ghost,dressShape,dressMat,0,.05,0,1,1,1);
+
+// Hood and head
+part(ghost,new THREE.SphereGeometry(.25,24,18),
+skinMat,0,1.53,0,.86,1.1,.8);
+
+part(ghost,new THREE.SphereGeometry(.31,24,18),
+dressMat,0,1.67,.05,1,1.2,1);
+
+// Face shadow
+part(ghost,new THREE.SphereGeometry(.19,20,16),
+darkMat,0,1.53,-.19,.85,1,.35);
+
+// Eyes
+for(const x of [-.09,.09]){
+part(ghost,new THREE.SphereGeometry(.042,12,12),
+eyeMat,x,1.59,-.26,1,1,1);
+}
+
+// Mouth
+part(ghost,new THREE.SphereGeometry(.055,12,12),
+darkMat,0,1.39,-.26,.7,1.4,.4);
+
+// Long strands of black hair
+for(let i=0;i<13;i++){
+const x=(Math.random()-.5)*.43;
+const strand=part(ghost,
+new THREE.CylinderGeometry(.008,.025,.9+Math.random()*.45,5),
+hairMat,x,1.12,-.16-Math.random()*.04,1,1,1);
+strand.rotation.z=(Math.random()-.5)*.25;
+}
+
+// Hood drape behind head
+part(ghost,new THREE.SphereGeometry(.31,20,16),
+dressMat,0,1.63,.17,1.05,1.25,.9);
+
+// Arms with animated pivots
+const arms=[];
+for(const side of [-1,1]){
+const pivot=new THREE.Group();
+pivot.position.set(side*.29,1.22,0);
+ghost.add(pivot);
+part(pivot,new THREE.CylinderGeometry(.075,.09,.72,12),
+dressMat,0,-.34,0);
+part(pivot,new THREE.SphereGeometry(.09,12,10),
+skinMat,0,-.75,-.01,.8,1.2,.8);
+arms.push(pivot);
+}
+
+// Legs
+const legs=[];
+for(const side of [-1,1]){
+const pivot=new THREE.Group();
+pivot.position.set(side*.15,.2,0);
+ghost.add(pivot);
+part(pivot,new THREE.CylinderGeometry(.075,.08,.5,10),
+skinMat,0,-.22,0);
+legs.push(pivot);
+}
+eyeLight.position.set(0,1.58,-.35);
+ghost.add(eyeLight);
+
+// MOBILE CONTROLS
+let joyX=0,joyY=0,yaw=0,pitch=0;
+let active=false,gameOver=false;
+let last=0,looking=false,previousX=0,previousY=0;
+
+const pad=document.getElementById('controls');
+const knob=document.getElementById('knob');
+let pointer=null;
+
+pad.addEventListener('pointerdown',e=>{
+pointer=e.pointerId;
+pad.setPointerCapture(pointer);
+movePad(e);
+});
+pad.addEventListener('pointermove',e=>{
+if(e.pointerId===pointer)movePad(e);
+});
+function movePad(e){
+const r=pad.getBoundingClientRect();
+let x=e.clientX-r.left-r.width/2;
+let y=e.clientY-r.top-r.height/2;
+const len=Math.hypot(x,y);
+if(len>34){x=x/len*34;y=y/len*34;}
+joyX=x/34;joyY=y/34;
+knob.style.transform=`translate(${x}px,${y}px)`;
+}
+function release(){
+pointer=null;joyX=0;joyY=0;
+knob.style.transform='translate(0,0)';
+}
+pad.addEventListener('pointerup',release);
+pad.addEventListener('pointercancel',release);
+
+const look=document.getElementById('look');
+look.addEventListener('pointerdown',e=>{
+looking=true;previousX=e.clientX;previousY=e.clientY;
+look.setPointerCapture(e.pointerId);
+});
+look.addEventListener('pointermove',e=>{
+if(!looking)return;
+yaw-=(e.clientX-previousX)*.004;
+pitch-=(e.clientY-previousY)*.003;
+pitch=THREE.MathUtils.clamp(pitch,-.65,.65);
+previousX=e.clientX;previousY=e.clientY;
+});
+look.addEventListener('pointerup',()=>looking=false);
+look.addEventListener('pointercancel',()=>looking=false);
+
+const keys={};
+addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+
+document.getElementById('start').onclick=()=>{
+document.getElementById('intro').style.display='none';
+active=true;
+};
+
+// GHOST BEHAVIOUR
+const direction=new THREE.Vector3();
+const playerDirection=new THREE.Vector3();
+
+function catchPlayer(){
+gameOver=true;
+document.getElementById('scare').style.display='flex';
+}
+
+function animate(time){
+requestAnimationFrame(animate);
+const dt=Math.min((time-last)/1000,.04);
+last=time;
+
+if(active&&!gameOver){
+let f=joyY,s=joyX;
+if(keys.w||keys.arrowup)f=-1;
+if(keys.s||keys.arrowdown)f=1;
+if(keys.a||keys.arrowleft)s=-1;
+if(keys.d||keys.arrowright)s=1;
+
+const speed=3*dt;
+camera.position.x+=(
+Math.cos(yaw)*s+Math.sin(yaw)*f
+)*speed;
+camera.position.z+=(
+-Math.sin(yaw)*s+Math.cos(yaw)*f
+)*speed;
+camera.position.x=THREE.MathUtils.clamp(camera.position.x,-3.6,3.6);
+camera.position.z=THREE.MathUtils.clamp(camera.position.z,-39,12);
+
+camera.rotation.order='YXZ';
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+// Is the player looking at the ghost?
+direction.set(
+ghost.position.x-camera.position.x,
+0,
+ghost.position.z-camera.position.z
+);
+const distance=direction.length();
+direction.normalize();
+playerDirection.set(-Math.sin(yaw),0,-Math.cos(yaw));
+const facing=playerDirection.dot(direction);
+const seesGhost=facing>.72&&distance<19;
+
+// She moves when unseen
+let ghostSpeed=0;
+if(!seesGhost){
+ghostSpeed=distance<6?1.75:1.05;
+}else{
+ghostSpeed=0;
+}
+
+// When close, she charges
+if(distance<5&&!seesGhost)ghostSpeed=3.2;
+
+if(distance>1.5){
+ghost.position.x+=direction.x*ghostSpeed*dt;
+ghost.position.z+=direction.z*ghostSpeed*dt;
+}
+
+ghost.rotation.y=Math.atan2(
+camera.position.x-ghost.position.x,
+camera.position.z-ghost.position.z
+);
+
+// Animated walking and floating
+const walking=time*.008;
+const moving=ghostSpeed>0;
+ghost.position.y=Math.sin(time*.003)*.035+
+(moving?Math.abs(Math.sin(walking))*.06:0);
+legs[0].rotation.x=Math.sin(walking)*.45;
+legs[1].rotation.x=-Math.sin(walking)*.45;
+arms[0].rotation.x=Math.sin(walking)*.2;
+arms[1].rotation.x=-Math.sin(walking)*.2;
+arms[0].rotation.z=-.15+Math.sin(walking)*.12;
+arms[1].rotation.z=.15-Math.sin(walking)*.12;
+dress.rotation.z=Math.sin(walking)*.025;
+
+// Scare status
+const status=document.getElementById('status');
+if(distance<5)status.textContent='SHE IS RIGHT BEHIND YOU...';
+else if(seesGhost)status.textContent='SHE IS WATCHING YOU.';
+else status.textContent='THE VEIL • SOMETHING IS MOVING';
+
+if(distance<1.8)catchPlayer();
+}
+
+renderer.render(scene,camera);
+}
+requestAnimationFrame(animate);
+
+addEventListener('resize',()=>{
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
